@@ -6,6 +6,6 @@
 
 int main(void)
 {
-    fprintf(stdout, "Hello, Linux programming world!\n";
+    fprintf(stdout, "Hello, Linux programming world!\n");
     return 0;
 }
