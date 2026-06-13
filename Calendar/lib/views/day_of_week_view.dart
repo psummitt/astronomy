@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../providers/calendar_provider.dart';
 import '../utils/calendar_engine.dart';
 
 class DayOfWeekView extends StatefulWidget {
@@ -73,8 +71,6 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
 
   @override
   Widget build(BuildContext context) {
-    final isRetro = Provider.of<CalendarProvider>(context).themeMode == 'retro';
-
     return SingleChildScrollView(
       child: Form(
         key: _formKey,
@@ -82,13 +78,13 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            Text(
-              isRetro ? '--- DAY OF WEEK FINDER ---' : 'Day of Week Finder',
+            const Text(
+              'Day of Week Finder',
               style: TextStyle(
-                fontSize: isRetro ? 18 : 22,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
-                fontFamily: isRetro ? 'monospace' : 'Outfit',
-                color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+                fontFamily: 'Outfit',
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
@@ -97,12 +93,12 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isRetro ? Colors.transparent : const Color(0xFF161E31),
+                color: const Color(0xFF161E31),
                 border: Border.all(
-                  color: isRetro ? const Color(0xFF00AA00) : Colors.white10,
-                  width: isRetro ? 1.5 : 1.0,
+                  color: Colors.white10,
+                  width: 1.0,
                 ),
-                borderRadius: isRetro ? null : BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
@@ -111,12 +107,11 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
                     controller: _yearController,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: isRetro ? 'THE YEAR' : 'Year',
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      border: isRetro ? const OutlineInputBorder() : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Year',
+                      prefixIcon: Icon(Icons.calendar_today),
                     ),
-                    style: TextStyle(fontFamily: isRetro ? 'monospace' : 'Outfit', fontSize: 16),
+                    style: const TextStyle(fontFamily: 'Outfit', fontSize: 16),
                     validator: (val) {
                       if (val == null || val.isEmpty) return 'Enter Year';
                       final y = int.tryParse(val);
@@ -131,12 +126,11 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
                     controller: _monthController,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: isRetro ? 'THE MONTH' : 'Month (1-12)',
-                      prefixIcon: const Icon(Icons.date_range),
-                      border: isRetro ? const OutlineInputBorder() : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Month (1-12)',
+                      prefixIcon: Icon(Icons.date_range),
                     ),
-                    style: TextStyle(fontFamily: isRetro ? 'monospace' : 'Outfit', fontSize: 16),
+                    style: const TextStyle(fontFamily: 'Outfit', fontSize: 16),
                     validator: (val) {
                       if (val == null || val.isEmpty) return 'Enter Month';
                       final m = int.tryParse(val);
@@ -151,12 +145,11 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
                     controller: _dayController,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: isRetro ? 'THE DAY' : 'Day',
-                      prefixIcon: const Icon(Icons.today),
-                      border: isRetro ? const OutlineInputBorder() : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Day',
+                      prefixIcon: Icon(Icons.today),
                     ),
-                    style: TextStyle(fontFamily: isRetro ? 'monospace' : 'Outfit', fontSize: 16),
+                    style: const TextStyle(fontFamily: 'Outfit', fontSize: 16),
                     validator: (val) {
                       if (val == null || val.isEmpty) return 'Enter Day';
                       final d = int.tryParse(val);
@@ -171,12 +164,9 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _calculateDay,
-                      style: ElevatedButton.styleFrom(
-                        shape: isRetro ? const BeveledRectangleBorder() : null,
-                      ),
-                      child: Text(
-                        isRetro ? 'RUN CALCULATION' : 'Find Day of Week',
-                        style: const TextStyle(fontSize: 16),
+                      child: const Text(
+                        'Find Day of Week',
+                        style: TextStyle(fontSize: 16),
                       ),
                     ),
                   ),
@@ -190,47 +180,10 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
               AnimatedOpacity(
                 opacity: _hasCalculated ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
-                child: isRetro 
-                  ? _buildRetroResult()
-                  : _buildModernResult(),
+                child: _buildModernResult(),
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRetroResult() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF33FF33), width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$_calcYear, $_calcMonth, $_calcDay',
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 18,
-              color: Color(0xFF33FF33),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '......IS A $_calculatedDay',
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 20,
-              color: Color(0xFF33FF33),
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -248,7 +201,7 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+            color: const Color(0xFF8B5CF6).withOpacity(0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

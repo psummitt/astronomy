@@ -6,7 +6,6 @@ import '../utils/calendar_engine.dart';
 class CalendarProvider with ChangeNotifier {
   int _selectedYear = DateTime.now().year;
   int _selectedMonth = DateTime.now().month;
-  String _themeMode = 'modern'; // 'modern' or 'retro'
   
   Set<String> _disabledHolidayIds = {};
   List<Holiday> _customHolidays = [];
@@ -14,7 +13,6 @@ class CalendarProvider with ChangeNotifier {
 
   int get selectedYear => _selectedYear;
   int get selectedMonth => _selectedMonth;
-  String get themeMode => _themeMode;
   bool get isLoaded => _isLoaded;
 
   Set<String> get disabledHolidayIds => _disabledHolidayIds;
@@ -81,20 +79,6 @@ class CalendarProvider with ChangeNotifier {
     }
   }
 
-  void toggleTheme() {
-    _themeMode = _themeMode == 'modern' ? 'retro' : 'modern';
-    notifyListeners();
-    _saveToPrefs();
-  }
-
-  void setTheme(String mode) {
-    if (mode == 'modern' || mode == 'retro') {
-      _themeMode = mode;
-      notifyListeners();
-      _saveToPrefs();
-    }
-  }
-
   void toggleHolidayEnabled(String id, bool enabled) {
     final isCustom = _customHolidays.any((h) => h.id == id);
     if (isCustom) {
@@ -132,7 +116,6 @@ class CalendarProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _selectedYear = prefs.getInt('selectedYear') ?? DateTime.now().year;
       _selectedMonth = prefs.getInt('selectedMonth') ?? DateTime.now().month;
-      _themeMode = prefs.getString('themeMode') ?? 'modern';
       
       final disabledList = prefs.getStringList('disabledHolidayIds') ?? [];
       _disabledHolidayIds = Set.from(disabledList);
@@ -154,7 +137,6 @@ class CalendarProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('selectedYear', _selectedYear);
       await prefs.setInt('selectedMonth', _selectedMonth);
-      await prefs.setString('themeMode', _themeMode);
       await prefs.setStringList('disabledHolidayIds', _disabledHolidayIds.toList());
       
       final customJsonList = _customHolidays

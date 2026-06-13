@@ -14,26 +14,49 @@ class CalendarView extends StatefulWidget {
 
 class _CalendarViewState extends State<CalendarView> {
   late TextEditingController _yearController;
+  late FocusNode _yearFocusNode;
   DateTime? _selectedDay;
   String? _yearError;
 
   @override
   void initState() {
     super.initState();
+    _yearFocusNode = FocusNode();
     final provider = Provider.of<CalendarProvider>(context, listen: false);
     _yearController = TextEditingController(text: provider.selectedYear.toString());
-    _selectedDay = DateTime(provider.selectedYear, provider.selectedMonth, DateTime.now().day);
-    // Bounds check day
+
+    final now = DateTime.now();
+    int day = now.day;
     final maxDays = CalendarEngine.getDaysInMonth(provider.selectedYear, provider.selectedMonth);
-    if (_selectedDay!.day > maxDays) {
-      _selectedDay = DateTime(provider.selectedYear, provider.selectedMonth, 1);
-    }
+    if (day > maxDays) day = maxDays;
+    _selectedDay = DateTime(provider.selectedYear, provider.selectedMonth, day);
   }
 
   @override
   void dispose() {
     _yearController.dispose();
+    _yearFocusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = Provider.of<CalendarProvider>(context);
+
+    // Sync year controller if it changed externally (e.g. from HolidayView)
+    if (!_yearFocusNode.hasFocus) {
+      if (_yearController.text != provider.selectedYear.toString()) {
+        _yearController.text = provider.selectedYear.toString();
+      }
+    }
+
+    // Sync selected day if the year/month changed externally
+    if (_selectedDay != null &&
+        (_selectedDay!.year != provider.selectedYear ||
+            _selectedDay!.month != provider.selectedMonth)) {
+      _updateSelectedDayBounds(provider.selectedYear, provider.selectedMonth);
+    }
   }
 
   void _onYearChanged(String value, CalendarProvider provider) {
@@ -70,7 +93,6 @@ class _CalendarViewState extends State<CalendarView> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CalendarProvider>(context);
-    final isRetro = provider.themeMode == 'retro';
 
     final year = provider.selectedYear;
     final month = provider.selectedMonth;
@@ -87,7 +109,7 @@ class _CalendarViewState extends State<CalendarView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Top Selection Area
-        _buildSelectionHeader(context, provider, isRetro),
+        _buildSelectionHeader(context, provider),
         const SizedBox(height: 16),
 
         // Main Grid and Day Details Side-by-Side on wide layouts, otherwise stacked
@@ -101,10 +123,11 @@ class _CalendarViewState extends State<CalendarView> {
                 startOffset,
                 totalDays,
                 holidaysMap,
-                isRetro,
+                year,
+                month,
               );
 
-              final dayDetailsWidget = _buildDayDetails(isRetro);
+              final dayDetailsWidget = _buildDayDetails();
 
               if (isWide) {
                 return Row(
@@ -133,17 +156,16 @@ class _CalendarViewState extends State<CalendarView> {
     );
   }
 
-  Widget _buildSelectionHeader(
-      BuildContext context, CalendarProvider provider, bool isRetro) {
+  Widget _buildSelectionHeader(BuildContext context, CalendarProvider provider) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isRetro ? Colors.transparent : const Color(0xFF161E31),
+        color: const Color(0xFF161E31),
         border: Border.all(
-          color: isRetro ? const Color(0xFF00AA00) : Colors.white10,
-          width: isRetro ? 1.5 : 1.0,
+          color: Colors.white10,
+          width: 1.0,
         ),
-        borderRadius: isRetro ? null : BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
@@ -151,17 +173,17 @@ class _CalendarViewState extends State<CalendarView> {
           Expanded(
             child: TextField(
               controller: _yearController,
+              focusNode: _yearFocusNode,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
-                labelText: isRetro ? 'YEAR' : 'Year',
+                labelText: 'Year',
                 errorText: _yearError,
                 prefixIcon: const Icon(Icons.calendar_today_outlined),
-                border: isRetro ? const OutlineInputBorder() : null,
               ),
-              style: TextStyle(
-                fontFamily: isRetro ? 'monospace' : 'Outfit',
-                fontSize: isRetro ? 16 : 18,
+              style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
               onChanged: (val) => _onYearChanged(val, provider),
@@ -171,17 +193,16 @@ class _CalendarViewState extends State<CalendarView> {
           // Month drop down
           Expanded(
             child: DropdownButtonFormField<int>(
-              initialValue: provider.selectedMonth,
-              decoration: InputDecoration(
-                labelText: isRetro ? 'MONTH' : 'Month',
+              value: provider.selectedMonth,
+              decoration: const InputDecoration(
+                labelText: 'Month',
                 prefixIcon: const Icon(Icons.date_range),
-                border: isRetro ? const OutlineInputBorder() : null,
               ),
-              dropdownColor: isRetro ? const Color(0xFF020902) : const Color(0xFF161E31),
-              style: TextStyle(
-                fontFamily: isRetro ? 'monospace' : 'Outfit',
-                fontSize: isRetro ? 16 : 18,
-                color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+              dropdownColor: const Color(0xFF161E31),
+              style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 18,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
               items: List.generate(12, (index) {
@@ -189,10 +210,8 @@ class _CalendarViewState extends State<CalendarView> {
                 return DropdownMenuItem(
                   value: m,
                   child: Text(
-                    isRetro
-                        ? CalendarEngine.monthNames[m]
-                        : CalendarEngine.monthNames[m].substring(0, 1) +
-                            CalendarEngine.monthNames[m].substring(1).toLowerCase(),
+                    CalendarEngine.monthNames[m].substring(0, 1) +
+                        CalendarEngine.monthNames[m].substring(1).toLowerCase(),
                   ),
                 );
               }),
@@ -211,7 +230,8 @@ class _CalendarViewState extends State<CalendarView> {
       int startOffset,
       int totalDays,
       Map<int, List<Holiday>> holidaysMap,
-      bool isRetro) {
+      int year,
+      int month) {
     // Weekday headers
     final headers = CalendarEngine.shortWeekdayLabels;
 
@@ -224,12 +244,10 @@ class _CalendarViewState extends State<CalendarView> {
         Center(
           child: Text(
             h,
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: isRetro 
-                ? const Color(0xFF33FF33)
-                : const Color(0xFF4FACFE),
-              fontFamily: isRetro ? 'monospace' : 'Outfit',
+              color: Color(0xFF4FACFE),
+              fontFamily: 'Outfit',
               fontSize: 16,
             ),
           ),
@@ -245,7 +263,8 @@ class _CalendarViewState extends State<CalendarView> {
     // Days cells
     for (int day = 1; day <= totalDays; day++) {
       final isSelected = _selectedDay?.day == day &&
-          _selectedDay?.month == providerYearMonthMatch(context);
+          _selectedDay?.month == month &&
+          _selectedDay?.year == year;
       
       final dayHolidays = holidaysMap[day] ?? [];
       final hasHoliday = dayHolidays.isNotEmpty;
@@ -254,29 +273,22 @@ class _CalendarViewState extends State<CalendarView> {
         GestureDetector(
           onTap: () {
             setState(() {
-              final provider = Provider.of<CalendarProvider>(context, listen: false);
-              _selectedDay = DateTime(provider.selectedYear, provider.selectedMonth, day);
+              _selectedDay = DateTime(year, month, day);
             });
           },
           child: Container(
             margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isRetro
-                  ? (isSelected ? const Color(0xFF004400) : Colors.transparent)
-                  : (isSelected 
-                      ? const Color(0xFF00F2FE).withValues(alpha: 0.25)
-                      : (hasHoliday ? const Color(0xFF8B5CF6).withValues(alpha: 0.1) : const Color(0xFF1E293B).withValues(alpha: 0.3))),
+              color: isSelected 
+                  ? const Color(0xFF00F2FE).withOpacity(0.25)
+                  : (hasHoliday ? const Color(0xFF8B5CF6).withOpacity(0.1) : const Color(0xFF1E293B).withOpacity(0.3)),
               border: Border.all(
-                color: isRetro
-                    ? (isSelected
-                        ? const Color(0xFF33FF33)
-                        : (hasHoliday ? const Color(0xFF00AA00) : Colors.transparent))
-                    : (isSelected
-                        ? const Color(0xFF00F2FE)
-                        : (hasHoliday ? const Color(0xFF8B5CF6).withValues(alpha: 0.5) : Colors.white10)),
-                width: isRetro ? (isSelected ? 2.0 : 1.0) : 1.5,
+                color: isSelected
+                    ? const Color(0xFF00F2FE)
+                    : (hasHoliday ? const Color(0xFF8B5CF6).withOpacity(0.5) : Colors.white10),
+                width: 1.5,
               ),
-              borderRadius: isRetro ? null : BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Stack(
               alignment: Alignment.center,
@@ -287,11 +299,9 @@ class _CalendarViewState extends State<CalendarView> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: isSelected || hasHoliday ? FontWeight.bold : FontWeight.normal,
-                    color: isRetro
-                        ? const Color(0xFF33FF33)
-                        : (isSelected 
-                            ? const Color(0xFF00F2FE) 
-                            : (hasHoliday ? const Color(0xFFA78BFA) : Colors.white)),
+                    color: isSelected 
+                        ? const Color(0xFF00F2FE) 
+                        : (hasHoliday ? const Color(0xFFA78BFA) : Colors.white),
                   ),
                 ),
                 // Indicator for holiday
@@ -301,8 +311,8 @@ class _CalendarViewState extends State<CalendarView> {
                     child: Container(
                       width: 5,
                       height: 5,
-                      decoration: BoxDecoration(
-                        color: isRetro ? const Color(0xFF33FF33) : const Color(0xFF8B5CF6),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF8B5CF6),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -317,12 +327,12 @@ class _CalendarViewState extends State<CalendarView> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isRetro ? Colors.transparent : const Color(0xFF161E31),
+        color: const Color(0xFF161E31),
         border: Border.all(
-          color: isRetro ? const Color(0xFF00AA00) : Colors.white10,
-          width: isRetro ? 1.5 : 1.0,
+          color: Colors.white10,
+          width: 1.0,
         ),
-        borderRadius: isRetro ? null : BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: GridView.count(
         shrinkWrap: true,
@@ -334,18 +344,14 @@ class _CalendarViewState extends State<CalendarView> {
     );
   }
 
-  int providerYearMonthMatch(BuildContext context) {
-    return Provider.of<CalendarProvider>(context, listen: false).selectedMonth;
-  }
-
-  Widget _buildDayDetails(bool isRetro) {
+  Widget _buildDayDetails() {
     if (_selectedDay == null) {
       return Container(
         height: 200,
         alignment: Alignment.center,
-        child: Text(
-          isRetro ? 'SELECT A DAY' : 'Select a day to view details',
-          style: TextStyle(fontFamily: isRetro ? 'monospace' : 'Outfit'),
+        child: const Text(
+          'Select a day to view details',
+          style: TextStyle(fontFamily: 'Outfit'),
         ),
       );
     }
@@ -362,69 +368,69 @@ class _CalendarViewState extends State<CalendarView> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isRetro ? Colors.transparent : const Color(0xFF161E31),
+        color: const Color(0xFF161E31),
         border: Border.all(
-          color: isRetro ? const Color(0xFF00AA00) : Colors.white10,
-          width: isRetro ? 1.5 : 1.0,
+          color: Colors.white10,
+          width: 1.0,
         ),
-        borderRadius: isRetro ? null : BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Day Header
-          Text(
-            isRetro ? '--- DAY REPORT ---' : 'DAY DETAILS',
+          const Text(
+            'DAY DETAILS',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: isRetro ? const Color(0xFF33FF33) : const Color(0xFF00F2FE),
+              color: Color(0xFF00F2FE),
               letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 12),
           Text(
             '${_selectedDay!.day} ${CalendarEngine.shortMonthNames[_selectedDay!.month]} ${_selectedDay!.year}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              fontFamily: isRetro ? 'monospace' : 'Outfit',
-              color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+              fontFamily: 'Outfit',
+              color: Colors.white,
             ),
           ),
           Text(
             weekdayName,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              fontFamily: isRetro ? 'monospace' : 'Outfit',
-              color: isRetro ? const Color(0xFF00AA00) : const Color(0xFF94A3B8),
+              fontFamily: 'Outfit',
+              color: Color(0xFF94A3B8),
             ),
           ),
           const Divider(height: 24),
 
-          // Day stats (Applesoft inspired)
-          _buildInfoRow(isRetro, 'Day of Year', '$dayOfYear'),
-          _buildInfoRow(isRetro, 'Days Remaining', '$daysRemaining'),
+          // Day stats
+          _buildInfoRow('Day of Year', '$dayOfYear'),
+          _buildInfoRow('Days Remaining', '$daysRemaining'),
           
           const Divider(height: 24),
 
           // Holidays today
-          Text(
-            isRetro ? 'HOLIDAYS:' : 'Holidays on this day:',
+          const Text(
+            'Holidays on this day:',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              fontFamily: isRetro ? 'monospace' : 'Outfit',
-              color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+              fontFamily: 'Outfit',
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
           if (dayHolidays.isEmpty)
-            Text(
-              isRetro ? '[NONE]' : 'No holidays',
+            const Text(
+              'No holidays',
               style: TextStyle(
-                fontFamily: isRetro ? 'monospace' : 'Outfit',
-                color: isRetro ? const Color(0xFF00AA00) : const Color(0xFF64748B),
+                fontFamily: 'Outfit',
+                color: Color(0xFF64748B),
               ),
             )
           else
@@ -433,19 +439,19 @@ class _CalendarViewState extends State<CalendarView> {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.star,
                       size: 16,
-                      color: isRetro ? const Color(0xFF33FF33) : const Color(0xFF8B5CF6),
+                      color: Color(0xFF8B5CF6),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         h.name,
-                        style: TextStyle(
-                          fontFamily: isRetro ? 'monospace' : 'Outfit',
+                        style: const TextStyle(
+                          fontFamily: 'Outfit',
                           fontWeight: FontWeight.bold,
-                          color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -458,7 +464,7 @@ class _CalendarViewState extends State<CalendarView> {
     );
   }
 
-  Widget _buildInfoRow(bool isRetro, String label, String value) {
+  Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -466,10 +472,10 @@ class _CalendarViewState extends State<CalendarView> {
         children: [
           Expanded(
             child: Text(
-              isRetro ? '${label.toUpperCase()}:' : label,
-              style: TextStyle(
-                fontFamily: isRetro ? 'monospace' : 'Outfit',
-                color: isRetro ? const Color(0xFF00AA00) : const Color(0xFF94A3B8),
+              label,
+              style: const TextStyle(
+                fontFamily: 'Outfit',
+                color: Color(0xFF94A3B8),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -477,10 +483,10 @@ class _CalendarViewState extends State<CalendarView> {
           const SizedBox(width: 8),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
-              fontFamily: isRetro ? 'monospace' : 'Outfit',
-              color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+              fontFamily: 'Outfit',
+              color: Colors.white,
             ),
           ),
         ],

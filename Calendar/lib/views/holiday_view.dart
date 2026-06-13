@@ -44,7 +44,7 @@ class _HolidayViewState extends State<HolidayView> {
     }
   }
 
-  void _showAddHolidayDialog(BuildContext context, CalendarProvider provider, bool isRetro) {
+  void _showAddHolidayDialog(BuildContext context, CalendarProvider provider) {
     final formKey = GlobalKey<FormState>();
     String name = "";
     int month = 1;
@@ -57,12 +57,12 @@ class _HolidayViewState extends State<HolidayView> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: isRetro ? const Color(0xFF020902) : const Color(0xFF161E31),
-              title: Text(
-                isRetro ? 'ADD CUSTOM HOLIDAY' : 'Add Custom Holiday',
+              backgroundColor: const Color(0xFF161E31),
+              title: const Text(
+                'Add Custom Holiday',
                 style: TextStyle(
-                  fontFamily: isRetro ? 'monospace' : 'Outfit',
-                  color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+                  fontFamily: 'Outfit',
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -74,11 +74,10 @@ class _HolidayViewState extends State<HolidayView> {
                     children: [
                       // Holiday name
                       TextFormField(
-                        decoration: InputDecoration(
-                          labelText: isRetro ? 'NAME' : 'Holiday Name',
-                          border: isRetro ? const OutlineInputBorder() : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Holiday Name',
                         ),
-                        style: TextStyle(fontFamily: isRetro ? 'monospace' : 'Outfit'),
+                        style: const TextStyle(fontFamily: 'Outfit'),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) return 'Enter a name';
                           return null;
@@ -89,21 +88,21 @@ class _HolidayViewState extends State<HolidayView> {
 
                       // Month selection
                       DropdownButtonFormField<int>(
-                        initialValue: month,
-                        decoration: InputDecoration(
-                          labelText: isRetro ? 'MONTH' : 'Month',
-                          border: isRetro ? const OutlineInputBorder() : null,
+                        value: month,
+                        decoration: const InputDecoration(
+                          labelText: 'Month',
                         ),
-                        dropdownColor: isRetro ? const Color(0xFF020902) : const Color(0xFF161E31),
-                        style: TextStyle(
-                          fontFamily: isRetro ? 'monospace' : 'Outfit',
-                          color: isRetro ? const Color(0xFF33FF33) : Colors.white,
+                        dropdownColor: const Color(0xFF161E31),
+                        style: const TextStyle(
+                          fontFamily: 'Outfit',
+                          color: Colors.white,
                         ),
                         items: List.generate(12, (index) {
                           final m = index + 1;
                           return DropdownMenuItem(
                             value: m,
-                            child: Text(CalendarEngine.monthNames[m]),
+                            child: Text(CalendarEngine.monthNames[m].substring(0, 1) +
+                                CalendarEngine.monthNames[m].substring(1).toLowerCase()),
                           );
                         }),
                         onChanged: (val) {
@@ -118,11 +117,10 @@ class _HolidayViewState extends State<HolidayView> {
                       TextFormField(
                         keyboardType: TextInputType.number,
                         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: InputDecoration(
-                          labelText: isRetro ? 'DAY' : 'Day of Month',
-                          border: isRetro ? const OutlineInputBorder() : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Day of Month',
                         ),
-                        style: TextStyle(fontFamily: isRetro ? 'monospace' : 'Outfit'),
+                        style: const TextStyle(fontFamily: 'Outfit'),
                         validator: (val) {
                           if (val == null || val.isEmpty) return 'Enter day';
                           final d = int.tryParse(val);
@@ -141,16 +139,16 @@ class _HolidayViewState extends State<HolidayView> {
 
                       // Recurring vs Specific Year
                       SwitchListTile(
-                        title: Text(
-                          isRetro ? 'RECURRING ANNUALLY' : 'Repeats Annually',
+                        title: const Text(
+                          'Repeats Annually',
                           style: TextStyle(
-                            fontFamily: isRetro ? 'monospace' : 'Outfit',
-                            color: isRetro ? const Color(0xFF33FF33) : Colors.white70,
+                            fontFamily: 'Outfit',
+                            color: Colors.white70,
                             fontSize: 14,
                           ),
                         ),
                         value: isRecurring,
-                        activeThumbColor: isRetro ? const Color(0xFF33FF33) : const Color(0xFF00F2FE),
+                        activeThumbColor: const Color(0xFF00F2FE),
                         onChanged: (val) {
                           setDialogState(() => isRecurring = val);
                         },
@@ -162,15 +160,12 @@ class _HolidayViewState extends State<HolidayView> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    isRetro ? 'CANCEL' : 'Cancel',
-                    style: TextStyle(color: isRetro ? const Color(0xFF00AA00) : Colors.white70),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white70),
                   ),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    shape: isRetro ? const BeveledRectangleBorder() : null,
-                  ),
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       final newH = Holiday(
@@ -186,7 +181,7 @@ class _HolidayViewState extends State<HolidayView> {
                       Navigator.of(context).pop();
                     }
                   },
-                  child: Text(isRetro ? 'ADD' : 'Add'),
+                  child: const Text('Add'),
                 ),
               ],
             );
@@ -199,85 +194,73 @@ class _HolidayViewState extends State<HolidayView> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CalendarProvider>(context);
-    final isRetro = provider.themeMode == 'retro';
     final holidays = provider.getHolidaysForSelectedYear();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        // Header Input controls
-        _buildHeaderControls(context, provider, isRetro),
-        const SizedBox(height: 16),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          // Header Input controls
+          _buildHeaderControls(context, provider),
+          const SizedBox(height: 16),
 
-        // Holidays timeline/list
-        Expanded(
-          child: Container(
+          // Holidays timeline/list
+          Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isRetro ? Colors.transparent : const Color(0xFF161E31),
+              color: const Color(0xFF161E31),
               border: Border.all(
-                color: isRetro ? const Color(0xFF00AA00) : Colors.white10,
-                width: isRetro ? 1.5 : 1.0,
+                color: Colors.white10,
+                width: 1.0,
               ),
-              borderRadius: isRetro ? null : BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isRetro 
-                        ? 'FOR YEAR ${provider.selectedYear} THE HOLIDAYS ARE ...'
-                        : 'Holidays Calendar - ${provider.selectedYear}',
-                      style: TextStyle(
-                        fontFamily: isRetro ? 'monospace' : 'Outfit',
-                        fontSize: isRetro ? 14 : 18,
-                        fontWeight: FontWeight.bold,
-                        color: isRetro ? const Color(0xFF33FF33) : Colors.white,
-                      ),
-                    ),
-                    if (isRetro)
-                      Text(
-                        'COUNT: ${holidays.length}',
-                        style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00AA00)),
-                      ),
-                  ],
+                Text(
+                  'Holidays Calendar - ${provider.selectedYear}',
+                  style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 const Divider(height: 24),
-                Expanded(
-                  child: holidays.isEmpty
-                      ? Center(
+                holidays.isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40.0),
                           child: Text(
-                            isRetro ? '[NO HOLIDAYS FOUND]' : 'No holidays recorded for this year.',
+                            'No holidays recorded for this year.',
                             style: TextStyle(
-                              fontFamily: isRetro ? 'monospace' : 'Outfit',
-                              color: isRetro ? const Color(0xFF00AA00) : const Color(0xFF64748B),
+                              fontFamily: 'Outfit',
+                              color: Color(0xFF64748B),
                             ),
                           ),
-                        )
-                      : ListView.builder(
-                          itemCount: holidays.length,
-                          itemBuilder: (context, index) {
-                            final h = holidays[index];
-                            return isRetro 
-                              ? _buildRetroHolidayRow(provider, h) 
-                              : _buildModernHolidayCard(provider, h);
-                          },
                         ),
-                ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: holidays.length,
+                        itemBuilder: (context, index) {
+                          final h = holidays[index];
+                          return _buildModernHolidayCard(provider, h);
+                        },
+                      ),
               ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 
-  Widget _buildHeaderControls(
-      BuildContext context, CalendarProvider provider, bool isRetro) {
+  Widget _buildHeaderControls(BuildContext context, CalendarProvider provider) {
     return Row(
       children: [
         // Year input
@@ -287,13 +270,12 @@ class _HolidayViewState extends State<HolidayView> {
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: InputDecoration(
-              labelText: isRetro ? 'YEAR' : 'Holiday Year',
+              labelText: 'Holiday Year',
               errorText: _yearError,
               prefixIcon: const Icon(Icons.calendar_month),
-              border: isRetro ? const OutlineInputBorder() : null,
             ),
-            style: TextStyle(
-              fontFamily: isRetro ? 'monospace' : 'Outfit',
+            style: const TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -303,73 +285,14 @@ class _HolidayViewState extends State<HolidayView> {
         const SizedBox(width: 16),
         // Add custom holiday button
         ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            shape: isRetro ? const BeveledRectangleBorder() : null,
-          ),
           icon: const Icon(Icons.add),
-          label: Text(
-            isRetro ? 'ADD HOLIDAY' : 'Add Custom',
-            style: TextStyle(fontFamily: isRetro ? 'monospace' : 'Outfit'),
+          label: const Text(
+            'Add Custom',
+            style: TextStyle(fontFamily: 'Outfit'),
           ),
-          onPressed: () => _showAddHolidayDialog(context, provider, isRetro),
+          onPressed: () => _showAddHolidayDialog(context, provider),
         ),
       ],
-    );
-  }
-
-  Widget _buildRetroHolidayRow(CalendarProvider provider, Holiday h) {
-    // Calculate weekday for the holiday date
-    final date = DateTime(provider.selectedYear, h.month, h.day);
-    final weekdayName = CalendarEngine.weekdayNames[date.weekday - 1];
-    final shortMonth = CalendarEngine.shortMonthNames[h.month];
-    
-    final label = h.name.toUpperCase();
-    final dateStr = '$weekdayName, $shortMonth. ${h.day}';
-
-    // Build the dotted tab effect like early printer reports
-    final totalWidthChars = 40;
-    final dotCount = totalWidthChars - label.length - dateStr.length;
-    final dots = dotCount > 0 ? '.' * dotCount : ' ';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Opacity(
-        opacity: h.isEnabled ? 1.0 : 0.4,
-        child: Row(
-          children: [
-            // Enable toggle checkbox
-            Checkbox(
-              value: h.isEnabled,
-              activeColor: const Color(0xFF33FF33),
-              checkColor: const Color(0xFF020902),
-              side: const BorderSide(color: Color(0xFF33FF33)),
-              onChanged: (val) {
-                if (val != null) {
-                  provider.toggleHolidayEnabled(h.id, val);
-                }
-              },
-            ),
-            Expanded(
-              child: Text(
-                '$label$dots$dateStr',
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 13,
-                  color: h.isCustom ? const Color(0xFF33FF33) : const Color(0xFF33FF33),
-                  fontWeight: h.isCustom ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-            if (h.isCustom)
-              IconButton(
-                icon: const Icon(Icons.delete_forever, color: Color(0xFF33FF33), size: 18),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onPressed: () => provider.deleteCustomHoliday(h.id),
-              ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -379,13 +302,13 @@ class _HolidayViewState extends State<HolidayView> {
     final shortMonth = CalendarEngine.shortMonthNames[h.month];
 
     return Card(
-      color: const Color(0xFF1E293B).withValues(alpha: 0.5),
+      color: const Color(0xFF1E293B).withOpacity(0.5),
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: h.isCustom 
-            ? const Color(0xFF8B5CF6).withValues(alpha: 0.4)
+            ? const Color(0xFF8B5CF6).withOpacity(0.4)
             : Colors.white10,
         ),
       ),
@@ -398,8 +321,8 @@ class _HolidayViewState extends State<HolidayView> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: h.isEnabled 
-                  ? (h.isCustom ? const Color(0xFF8B5CF6).withValues(alpha: 0.2) : const Color(0xFF4FACFE).withValues(alpha: 0.2))
-                  : Colors.grey.withValues(alpha: 0.1),
+                  ? (h.isCustom ? const Color(0xFF8B5CF6).withOpacity(0.2) : const Color(0xFF4FACFE).withOpacity(0.2))
+                  : Colors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -454,7 +377,7 @@ class _HolidayViewState extends State<HolidayView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                            color: const Color(0xFF8B5CF6).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
