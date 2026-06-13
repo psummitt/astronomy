@@ -6,7 +6,7 @@ import '../utils/calendar_engine.dart';
 import '../models/holiday.dart';
 
 class CalendarView extends StatefulWidget {
-  const CalendarView({Key? key}) : super(key: key);
+  const CalendarView({super.key});
 
   @override
   State<CalendarView> createState() => _CalendarViewState();
@@ -171,7 +171,7 @@ class _CalendarViewState extends State<CalendarView> {
           // Month drop down
           Expanded(
             child: DropdownButtonFormField<int>(
-              value: provider.selectedMonth,
+              initialValue: provider.selectedMonth,
               decoration: InputDecoration(
                 labelText: isRetro ? 'MONTH' : 'Month',
                 prefixIcon: const Icon(Icons.date_range),
@@ -264,8 +264,8 @@ class _CalendarViewState extends State<CalendarView> {
               color: isRetro
                   ? (isSelected ? const Color(0xFF004400) : Colors.transparent)
                   : (isSelected 
-                      ? const Color(0xFF00F2FE).withOpacity(0.25)
-                      : (hasHoliday ? const Color(0xFF8B5CF6).withOpacity(0.1) : const Color(0xFF1E293B).withOpacity(0.3))),
+                      ? const Color(0xFF00F2FE).withValues(alpha: 0.25)
+                      : (hasHoliday ? const Color(0xFF8B5CF6).withValues(alpha: 0.1) : const Color(0xFF1E293B).withValues(alpha: 0.3))),
               border: Border.all(
                 color: isRetro
                     ? (isSelected
@@ -273,7 +273,7 @@ class _CalendarViewState extends State<CalendarView> {
                         : (hasHoliday ? const Color(0xFF00AA00) : Colors.transparent))
                     : (isSelected
                         ? const Color(0xFF00F2FE)
-                        : (hasHoliday ? const Color(0xFF8B5CF6).withOpacity(0.5) : Colors.white10)),
+                        : (hasHoliday ? const Color(0xFF8B5CF6).withValues(alpha: 0.5) : Colors.white10)),
                 width: isRetro ? (isSelected ? 2.0 : 1.0) : 1.5,
               ),
               borderRadius: isRetro ? null : BorderRadius.circular(10),

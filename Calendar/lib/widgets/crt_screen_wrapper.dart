@@ -6,10 +6,10 @@ class CrtScreenWrapper extends StatefulWidget {
   final bool enableRetro;
 
   const CrtScreenWrapper({
-    Key? key,
+    super.key,
     required this.child,
     this.enableRetro = true,
-  }) : super(key: key);
+  });
 
   @override
   State<CrtScreenWrapper> createState() => _CrtScreenWrapperState();
@@ -53,8 +53,6 @@ class _CrtScreenWrapperState extends State<CrtScreenWrapper>
         onSecondary: Color(0xFF33FF33),
         surface: Color(0xFF051805),
         onSurface: Color(0xFF33FF33),
-        background: Color(0xFF020902),
-        onBackground: Color(0xFF33FF33),
       ),
       textTheme: const TextTheme(
         bodyLarge: TextStyle(fontFamily: 'monospace', color: Color(0xFF33FF33), height: 1.2),
@@ -112,7 +110,7 @@ class _CrtScreenWrapperState extends State<CrtScreenWrapper>
                 // 2. Phosphor screen glow overlay (flicker)
                 IgnorePointer(
                   child: Container(
-                    color: Color(0xFF33FF33).withOpacity(flickerVal),
+                    color: Color(0xFF33FF33).withValues(alpha: flickerVal),
                   ),
                 ),
 
@@ -132,7 +130,7 @@ class _CrtScreenWrapperState extends State<CrtScreenWrapper>
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          const Color(0xFF33FF33).withOpacity(0.015),
+                          const Color(0xFF33FF33).withValues(alpha: 0.015),
                           Colors.transparent,
                         ],
                         stops: const [0.3, 0.5, 0.7],
@@ -158,7 +156,7 @@ class CrtEffectsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paintScanline = Paint()
-      ..color = const Color(0xFF000000).withOpacity(0.18)
+      ..color = const Color(0xFF000000).withValues(alpha: 0.18)
       ..strokeWidth = 1.0;
 
     // Draw horizontal scanlines
@@ -174,8 +172,8 @@ class CrtEffectsPainter extends CustomPainter {
       ..shader = RadialGradient(
         colors: [
           Colors.transparent,
-          const Color(0xFF000000).withOpacity(0.15),
-          const Color(0xFF000000).withOpacity(0.7),
+          const Color(0xFF000000).withValues(alpha: 0.15),
+          const Color(0xFF000000).withValues(alpha: 0.7),
         ],
         stops: const [0.6, 0.85, 1.0],
       ).createShader(rect);

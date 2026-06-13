@@ -5,7 +5,7 @@ import '../providers/calendar_provider.dart';
 import '../utils/calendar_engine.dart';
 
 class DayOfWeekView extends StatefulWidget {
-  const DayOfWeekView({Key? key}) : super(key: key);
+  const DayOfWeekView({super.key});
 
   @override
   State<DayOfWeekView> createState() => _DayOfWeekViewState();
@@ -248,7 +248,7 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B5CF6).withOpacity(0.3),
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

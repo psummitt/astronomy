@@ -17,7 +17,7 @@ void main() {
 }
 
 class PerpetualCalendarApp extends StatelessWidget {
-  const PerpetualCalendarApp({Key? key}) : super(key: key);
+  const PerpetualCalendarApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +37,6 @@ class PerpetualCalendarApp extends StatelessWidget {
         onSecondary: Colors.white,
         surface: Color(0xFF161E31),
         onSurface: Color(0xFFE2E8F0),
-        background: Color(0xFF0B0F19),
-        onBackground: Color(0xFF94A3B8),
       ),
       textTheme: const TextTheme(
         bodyLarge: TextStyle(fontFamily: 'Inter', color: Color(0xFFE2E8F0)),
@@ -67,7 +65,7 @@ class PerpetualCalendarApp extends StatelessWidget {
 }
 
 class CalendarAppHome extends StatefulWidget {
-  const CalendarAppHome({Key? key}) : super(key: key);
+  const CalendarAppHome({super.key});
 
   @override
   State<CalendarAppHome> createState() => _CalendarAppHomeState();
@@ -124,7 +122,7 @@ class _CalendarAppHomeState extends State<CalendarAppHome> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: isRetro ? const Color(0xFF33FF33) : const Color(0xFF00F2FE),
                       side: BorderSide(
-                        color: isRetro ? const Color(0xFF00AA00) : const Color(0xFF00F2FE).withOpacity(0.3),
+                        color: isRetro ? const Color(0xFF00AA00) : const Color(0xFF00F2FE).withValues(alpha: 0.3),
                       ),
                       shape: isRetro 
                         ? const BeveledRectangleBorder()
@@ -149,7 +147,7 @@ class _CalendarAppHomeState extends State<CalendarAppHome> {
                       });
                     },
                     backgroundColor: isRetro ? Colors.transparent : const Color(0xFF0D1424),
-                    indicatorColor: isRetro ? const Color(0xFF005500) : const Color(0xFF00F2FE).withOpacity(0.2),
+                    indicatorColor: isRetro ? const Color(0xFF005500) : const Color(0xFF00F2FE).withValues(alpha: 0.2),
                     labelType: NavigationRailLabelType.all,
                     minWidth: 80,
                     destinations: [
@@ -233,7 +231,7 @@ class _CalendarAppHomeState extends State<CalendarAppHome> {
 }
 
 class AboutView extends StatelessWidget {
-  const AboutView({Key? key}) : super(key: key);
+  const AboutView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +249,7 @@ class AboutView extends StatelessWidget {
             decoration: BoxDecoration(
               color: isRetro ? Colors.transparent : const Color(0xFF1E293B),
               border: Border.all(
-                color: isRetro ? const Color(0xFF33FF33) : const Color(0xFF38BDF8).withOpacity(0.2),
+                color: isRetro ? const Color(0xFF33FF33) : const Color(0xFF38BDF8).withValues(alpha: 0.2),
                 width: isRetro ? 2 : 1,
               ),
               borderRadius: isRetro ? null : BorderRadius.circular(16),

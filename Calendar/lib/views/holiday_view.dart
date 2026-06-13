@@ -6,7 +6,7 @@ import '../models/holiday.dart';
 import '../utils/calendar_engine.dart';
 
 class HolidayView extends StatefulWidget {
-  const HolidayView({Key? key}) : super(key: key);
+  const HolidayView({super.key});
 
   @override
   State<HolidayView> createState() => _HolidayViewState();
@@ -89,7 +89,7 @@ class _HolidayViewState extends State<HolidayView> {
 
                       // Month selection
                       DropdownButtonFormField<int>(
-                        value: month,
+                        initialValue: month,
                         decoration: InputDecoration(
                           labelText: isRetro ? 'MONTH' : 'Month',
                           border: isRetro ? const OutlineInputBorder() : null,
@@ -150,7 +150,7 @@ class _HolidayViewState extends State<HolidayView> {
                           ),
                         ),
                         value: isRecurring,
-                        activeColor: isRetro ? const Color(0xFF33FF33) : const Color(0xFF00F2FE),
+                        activeThumbColor: isRetro ? const Color(0xFF33FF33) : const Color(0xFF00F2FE),
                         onChanged: (val) {
                           setDialogState(() => isRecurring = val);
                         },
@@ -379,13 +379,13 @@ class _HolidayViewState extends State<HolidayView> {
     final shortMonth = CalendarEngine.shortMonthNames[h.month];
 
     return Card(
-      color: const Color(0xFF1E293B).withOpacity(0.5),
+      color: const Color(0xFF1E293B).withValues(alpha: 0.5),
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: h.isCustom 
-            ? const Color(0xFF8B5CF6).withOpacity(0.4)
+            ? const Color(0xFF8B5CF6).withValues(alpha: 0.4)
             : Colors.white10,
         ),
       ),
@@ -398,8 +398,8 @@ class _HolidayViewState extends State<HolidayView> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: h.isEnabled 
-                  ? (h.isCustom ? const Color(0xFF8B5CF6).withOpacity(0.2) : const Color(0xFF4FACFE).withOpacity(0.2))
-                  : Colors.grey.withOpacity(0.1),
+                  ? (h.isCustom ? const Color(0xFF8B5CF6).withValues(alpha: 0.2) : const Color(0xFF4FACFE).withValues(alpha: 0.2))
+                  : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -454,7 +454,7 @@ class _HolidayViewState extends State<HolidayView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
@@ -486,7 +486,7 @@ class _HolidayViewState extends State<HolidayView> {
             // Controls (Enable Toggle & Delete)
             Switch(
               value: h.isEnabled,
-              activeColor: h.isCustom ? const Color(0xFF8B5CF6) : const Color(0xFF00F2FE),
+              activeThumbColor: h.isCustom ? const Color(0xFF8B5CF6) : const Color(0xFF00F2FE),
               onChanged: (val) {
                 provider.toggleHolidayEnabled(h.id, val);
               },
