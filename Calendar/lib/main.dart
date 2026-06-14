@@ -120,7 +120,7 @@ class _CalendarAppHomeState extends State<CalendarAppHome> {
                     });
                   },
                   backgroundColor: const Color(0xFF0D1424),
-                  indicatorColor: const Color(0xFF00F2FE).withOpacity(0.2),
+                  indicatorColor: const Color(0xFF00F2FE).withValues(alpha: 0.2),
                   labelType: NavigationRailLabelType.all,
                   minWidth: 80,
                   destinations: const [
@@ -219,7 +219,7 @@ class AboutView extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B),
               border: Border.all(
-                color: const Color(0xFF38BDF8).withOpacity(0.2),
+                color: const Color(0xFF38BDF8).withValues(alpha: 0.2),
                 width: 1,
               ),
               borderRadius: BorderRadius.circular(16),

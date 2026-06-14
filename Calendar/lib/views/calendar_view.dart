@@ -193,10 +193,10 @@ class _CalendarViewState extends State<CalendarView> {
           // Month drop down
           Expanded(
             child: DropdownButtonFormField<int>(
-              value: provider.selectedMonth,
+              initialValue: provider.selectedMonth,
               decoration: const InputDecoration(
                 labelText: 'Month',
-                prefixIcon: const Icon(Icons.date_range),
+                prefixIcon: Icon(Icons.date_range),
               ),
               dropdownColor: const Color(0xFF161E31),
               style: const TextStyle(
@@ -280,12 +280,12 @@ class _CalendarViewState extends State<CalendarView> {
             margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: isSelected 
-                  ? const Color(0xFF00F2FE).withOpacity(0.25)
-                  : (hasHoliday ? const Color(0xFF8B5CF6).withOpacity(0.1) : const Color(0xFF1E293B).withOpacity(0.3)),
+                  ? const Color(0xFF00F2FE).withValues(alpha: 0.25)
+                  : (hasHoliday ? const Color(0xFF8B5CF6).withValues(alpha: 0.1) : const Color(0xFF1E293B).withValues(alpha: 0.3)),
               border: Border.all(
                 color: isSelected
                     ? const Color(0xFF00F2FE)
-                    : (hasHoliday ? const Color(0xFF8B5CF6).withOpacity(0.5) : Colors.white10),
+                    : (hasHoliday ? const Color(0xFF8B5CF6).withValues(alpha: 0.5) : Colors.white10),
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(10),

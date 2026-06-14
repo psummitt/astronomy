@@ -201,7 +201,7 @@ class _DayOfWeekViewState extends State<DayOfWeekView> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B5CF6).withOpacity(0.3),
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
