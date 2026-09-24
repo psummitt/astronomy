@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "974454311997",
+    "project_id": "astronomy-logbook",
+    "storage_bucket": "astronomy-logbook.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:974454311997:android:c4b8e0da83fdea1de0ae54",
+        "android_client_info": {
+          "package_name": "com.example.astrolog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkD1MhSxxpUu28ZeG4e0Xs9ySJMlRL44k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
