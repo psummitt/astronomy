@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/CDate/cdate_flutter/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/CDate/cdate_flutter/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/CDate/cdate_flutter/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Calendar/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Calendar/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Calendar/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Easter/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Easter/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Easter/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Epoch/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Epoch/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Epoch/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Julian/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Julian/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Julian/build" />
+      <excludeFolder url="file://$MODULE_DIR$/PStar/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/PStar/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/PStar/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Sunfinder/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Sunfinder/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Sunfinder/build" />
+      <excludeFolder url="file://$MODULE_DIR$/eclipse/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/eclipse/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/eclipse/build" />
+      <excludeFolder url="file://$MODULE_DIR$/logbook/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/logbook/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/logbook/build" />
+      <excludeFolder url="file://$MODULE_DIR$/mercury/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/mercury/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/mercury/build" />
+      <excludeFolder url="file://$MODULE_DIR$/orbitcalculator/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/orbitcalculator/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/orbitcalculator/build" />
+      <excludeFolder url="file://$MODULE_DIR$/radec/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/radec/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/radec/build" />
+      <excludeFolder url="file://$MODULE_DIR$/radem/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/radem/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/radem/build" />
+      <excludeFolder url="file://$MODULE_DIR$/starsearch/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/starsearch/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/starsearch/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
