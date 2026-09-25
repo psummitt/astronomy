@@ -121,9 +121,8 @@ class CalculatorPage extends StatefulWidget {
 class _CalculatorPageState extends State<CalculatorPage> {
   final _latitude = TextEditingController(text: '40.0');
   final _longitude = TextEditingController(text: '-75.0');
-  final _utcOffset = TextEditingController(text: '-4');
   DateTime _date = DateTime.now();
-  String _body = 'Sun';
+  String _body = 'Mercury';
   RiseSetResult? _result;
   String? _error;
 
@@ -137,7 +136,6 @@ class _CalculatorPageState extends State<CalculatorPage> {
   void dispose() {
     _latitude.dispose();
     _longitude.dispose();
-    _utcOffset.dispose();
     super.dispose();
   }
 
@@ -149,13 +147,15 @@ class _CalculatorPageState extends State<CalculatorPage> {
       lastDate: DateTime(2100),
       helpText: 'Choose the date to calculate',
     );
-    if (chosen != null) setState(() => _date = chosen);
+    if (chosen != null && chosen != _date) {
+      setState(() => _date = chosen);
+      _calculate();
+    }
   }
 
   void _calculate() {
     final latitude = double.tryParse(_latitude.text.trim());
     final longitude = double.tryParse(_longitude.text.trim());
-    final utcOffset = double.tryParse(_utcOffset.text.trim());
     if (latitude == null || latitude < -90 || latitude > 90) {
       setState(
         () => _error = 'Latitude must be a number from -90 to 90 degrees.',
@@ -168,13 +168,14 @@ class _CalculatorPageState extends State<CalculatorPage> {
       );
       return;
     }
-    if (utcOffset == null || utcOffset < -12 || utcOffset > 14) {
-      setState(() => _error = 'UTC offset must be between -12 and +14 hours.');
-      return;
-    }
     setState(() {
       _error = null;
-      _result = calculateRiseSet(_date, latitude, longitude, utcOffset, _body);
+      _result = calculateSunRelativeRiseSet(
+        _date,
+        latitude,
+        longitude,
+        _body,
+      );
     });
   }
 
@@ -194,12 +195,12 @@ class _CalculatorPageState extends State<CalculatorPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Find a planet in the sky',
+                    'Find Mercury or Venus near the Sun',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Calculate when a solar-system body rises and sets for your observing location.',
+                    'Estimate when either inner planet rises or sets relative to the Sun.',
                     style: TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 22),
@@ -247,26 +248,24 @@ class _CalculatorPageState extends State<CalculatorPage> {
             DropdownButtonFormField<String>(
               initialValue: _body,
               decoration: const InputDecoration(
-                labelText: 'Solar-system body',
-                helperText: 'Select the object you want to observe.',
+                labelText: 'Planet',
+                helperText: 'Select Mercury or Venus.',
               ),
               items:
                   const [
-                        'Sun',
                         'Mercury',
                         'Venus',
-                        'Mars',
-                        'Jupiter',
-                        'Saturn',
-                        'Uranus',
-                        'Neptune',
                       ]
                       .map(
                         (body) =>
                             DropdownMenuItem(value: body, child: Text(body)),
                       )
                       .toList(),
-              onChanged: (value) => setState(() => _body = value ?? 'Sun'),
+              onChanged: (value) {
+                if (value == null || value == _body) return;
+                setState(() => _body = value);
+                _calculate();
+              },
             ),
             const SizedBox(height: 16),
             Semantics(
@@ -320,17 +319,6 @@ class _CalculatorPageState extends State<CalculatorPage> {
               ],
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _utcOffset,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'UTC offset (hours)',
-                helperText: 'For example, -4 for Eastern Daylight Time.',
-              ),
-            ),
             const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
@@ -340,7 +328,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                 label: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'Calculate rise and set',
+                    'Update estimate',
                     style: TextStyle(fontSize: 17),
                   ),
                 ),
@@ -388,25 +376,23 @@ class _CalculatorPageState extends State<CalculatorPage> {
                   children: [
                     Text(
                       '${result.body} on ${result.dateLabel}',
+                      key: const ValueKey('result-heading'),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 6),
                     Text(result.locationLabel),
                     const SizedBox(height: 22),
-                    _EventRow(
-                      icon: Icons.arrow_upward,
-                      label: 'Rise',
-                      time: result.riseLocal,
-                      detail: result.riseUtc,
+                    Text(
+                      result.eventTitle,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      result.eventDetail,
+                      key: const ValueKey('result-event-detail'),
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const Divider(height: 28),
-                    _EventRow(
-                      icon: Icons.arrow_downward,
-                      label: 'Set',
-                      time: result.setLocal,
-                      detail: result.setUtc,
-                    ),
-                    const SizedBox(height: 20),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
@@ -432,41 +418,6 @@ class _CalculatorPageState extends State<CalculatorPage> {
   }
 }
 
-class _EventRow extends StatelessWidget {
-  const _EventRow({
-    required this.icon,
-    required this.label,
-    required this.time,
-    required this.detail,
-  });
-  final IconData icon;
-  final String label;
-  final String time;
-  final String detail;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      CircleAvatar(
-        backgroundColor: const Color(0xffd9f0f2),
-        foregroundColor: const Color(0xff075985),
-        child: Icon(icon),
-      ),
-      const SizedBox(width: 14),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(time, style: Theme.of(context).textTheme.headlineMedium),
-            Text(detail, style: const TextStyle(color: Color(0xff486581))),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
 class InstructionsPage extends StatelessWidget {
   const InstructionsPage({super.key});
   @override
@@ -475,24 +426,20 @@ class InstructionsPage extends StatelessWidget {
     icon: Icons.menu_book,
     children: [
       _InfoSection(
-        title: '1. Choose an object',
-        body: 'Select the Sun or a planet. PRISE calculates the times the object crosses the local horizon.',
+        title: '1. Choose a planet',
+        body: 'Select Mercury or Venus to estimate its rise or set relative to the Sun.',
       ),
       _InfoSection(
         title: '2. Choose a date',
-        body: 'Use the Date field to select the UTC calendar date for the calculation.',
+        body: 'Use the Date field to select the calendar date for the estimate.',
       ),
       _InfoSection(
         title: '3. Enter your location',
         body: 'Latitude is positive north of the equator and negative south. Longitude is positive east of Greenwich and negative west.',
       ),
       _InfoSection(
-        title: '4. Set the UTC offset',
-        body: 'Enter your civil time offset from UTC for the date. For example, use -4 during Eastern Daylight Time and -5 during Eastern Standard Time.',
-      ),
-      _InfoSection(
-        title: '5. Read the result',
-        body: 'Rise and set are shown in your entered civil time, with the corresponding UTC time below each. A circumpolar or never-visible message is shown when no horizon crossing occurs.',
+        title: '4. Read the result',
+        body: 'The estimate reports how many minutes the planet rises before sunrise or sets after sunset, based on whether it is a morning or evening star.',
       ),
       _InfoSection(
         title: 'Accuracy',
@@ -511,11 +458,11 @@ class AboutPage extends StatelessWidget {
     children: [
       _InfoSection(
         title: 'Planetary rise and set',
-        body: 'PRISE is a modern Flutter interpretation of the short astronomy programs published in Celestial BASIC by Eric Burgess.',
+        body: 'PRISE is a modern Flutter adaptation of the PRISE.BAS astronomy program by Eric Burgess.',
       ),
       _InfoSection(
         title: 'Source note',
-        body: 'The original PRISE.BAS listing was not present in this repository when this app was created. This implementation preserves the program’s intended rise-and-set purpose using a self-contained low-precision orbital calculation.',
+        body: 'PRISE.BAS estimates when Mercury and Venus rise before the Sun as morning stars or set after it as evening stars. This app follows that purpose with a modern low-precision orbital model; its calculations are not a line-for-line port of the BASIC listing.',
       ),
       _InfoSection(
         title: 'Accessibility',
@@ -587,92 +534,103 @@ class RiseSetResult {
     required this.body,
     required this.dateLabel,
     required this.locationLabel,
-    required this.riseLocal,
-    required this.setLocal,
-    required this.riseUtc,
-    required this.setUtc,
+    required this.eventTitle,
+    required this.eventDetail,
     required this.note,
     required this.accessibleSummary,
   });
   final String body;
   final String dateLabel;
   final String locationLabel;
-  final String riseLocal;
-  final String setLocal;
-  final String riseUtc;
-  final String setUtc;
+  final String eventTitle;
+  final String eventDetail;
   final String note;
   final String accessibleSummary;
 }
 
-RiseSetResult calculateRiseSet(
+RiseSetResult calculateSunRelativeRiseSet(
   DateTime date,
   double latitude,
   double longitude,
-  double utcOffset,
   String body,
 ) {
   final jd = _julianDay(DateTime.utc(date.year, date.month, date.day));
-  final position = _bodyPosition(body, jd);
+  final planet = _bodyPosition(body, jd);
+  final sun = _bodyPosition('Sun', jd);
+  final planetEvents = _horizonEvents(body, planet, jd, latitude, longitude);
+  final sunEvents = _horizonEvents('Sun', sun, jd, latitude, longitude);
+  final label =
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  final location =
+      '${latitude.toStringAsFixed(2)}°, ${longitude.toStringAsFixed(2)}°';
+  if (planetEvents == null || sunEvents == null) {
+    const note = 'A horizon crossing could not be estimated for this location and date.';
+    return RiseSetResult(
+      body: body,
+      dateLabel: label,
+      locationLabel: location,
+      eventTitle: 'No horizon estimate',
+      eventDetail: '',
+      note: note,
+      accessibleSummary: '$body on $label. $note',
+    );
+  }
+
+  final isEveningStar = _signedHours(planet.ra - sun.ra) > 0;
+  final offsetHours = isEveningStar
+      ? _signedHours(planetEvents.set - sunEvents.set)
+      : _signedHours(sunEvents.rise - planetEvents.rise);
+  final offsetMinutes = offsetHours * 60;
+    final relation = isEveningStar
+      ? (offsetMinutes >= 0 ? 'after sunset' : 'before sunset')
+      : (offsetMinutes >= 0 ? 'before sunrise' : 'after sunrise');
+    final eventDetail =
+      '${isEveningStar ? 'Sets' : 'Rises'} ${offsetMinutes.abs().round()} minutes $relation';
+  final eventTitle = isEveningStar ? 'Evening star' : 'Morning star';
+  const note = 'Approximate timing based on the selected date and observing location.';
+  return RiseSetResult(
+    body: body,
+    dateLabel: label,
+    locationLabel: location,
+    eventTitle: eventTitle,
+    eventDetail: eventDetail,
+    note: note,
+    accessibleSummary: '$body on $label. $eventTitle. $eventDetail.',
+  );
+}
+
+class _HorizonEvents {
+  const _HorizonEvents(this.rise, this.set);
+  final double rise;
+  final double set;
+}
+
+_HorizonEvents? _horizonEvents(
+  String body,
+  _Position position,
+  double jd,
+  double latitude,
+  double longitude,
+) {
   final lat = latitude * math.pi / 180;
   final dec = position.dec * math.pi / 180;
   final altitude = body == 'Sun' ? -0.833 : -0.566;
   final cosH =
       (math.sin(altitude * math.pi / 180) - math.sin(lat) * math.sin(dec)) /
       (math.cos(lat) * math.cos(dec));
-  final label =
-      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  final location =
-      '${latitude.toStringAsFixed(2)}°, ${longitude.toStringAsFixed(2)}°';
-  if (cosH > 1 || cosH < -1) {
-    final visible = cosH < -1;
-    final note = visible
-        ? '$body remains above the horizon all day.'
-        : '$body remains below the horizon all day.';
-    return RiseSetResult(
-      body: body,
-      dateLabel: label,
-      locationLabel: location,
-      riseLocal: 'No rise',
-      setLocal: 'No set',
-      riseUtc: 'No horizon crossing',
-      setUtc: 'No horizon crossing',
-      note: note,
-      accessibleSummary: '$body on $label. $note',
-    );
-  }
+  if (cosH > 1 || cosH < -1) return null;
   final hourAngle = math.acos(cosH) * 12 / math.pi;
   final gmst = (6.697374558 + 0.06570982441908 * (jd - 2451545.0)) % 24;
   final transit = ((position.ra - gmst - longitude / 15) / 1.00273790935) % 24;
   final rise = (transit - hourAngle / 1.00273790935) % 24;
   final set = (transit + hourAngle / 1.00273790935) % 24;
-  final riseUtc = _formatHour(rise);
-  final setUtc = _formatHour(set);
-  final riseLocal = _formatHour((rise + utcOffset) % 24);
-  final setLocal = _formatHour((set + utcOffset) % 24);
-  return RiseSetResult(
-    body: body,
-    dateLabel: label,
-    locationLabel: location,
-    riseLocal: riseLocal,
-    setLocal: setLocal,
-    riseUtc: '$riseUtc UTC',
-    setUtc: '$setUtc UTC',
-    note:
-        'Local times include the UTC offset you entered (${utcOffset >= 0 ? '+' : ''}${utcOffset.toStringAsFixed(1)} hours).',
-    accessibleSummary:
-        '$body on $label. Rises at $riseLocal local time, $riseUtc UTC. Sets at $setLocal local time, $setUtc UTC.',
-  );
+  return _HorizonEvents(rise, set);
 }
 
-String _formatHour(double hour) {
-  var value = hour % 24;
-  if (value < 0) value += 24;
-  final h = value.floor();
-  final m = ((value - h) * 60).round();
-  final adjustedH = m == 60 ? (h + 1) % 24 : h;
-  final adjustedM = m == 60 ? 0 : m;
-  return '${adjustedH.toString().padLeft(2, '0')}:${adjustedM.toString().padLeft(2, '0')}';
+double _signedHours(double value) {
+  var hours = (value + 12) % 24;
+  if (hours < 0) hours += 24;
+  return hours - 12;
 }
 
 double _julianDay(DateTime date) =>
