@@ -24,7 +24,7 @@ class EasterApp extends StatelessWidget {
   }
 }
 
-class MainNavigationShell extends StatelessWidget {
+class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
 
   @override
@@ -36,14 +36,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   final List<Widget> _views = [
     const ModernCalculator(),
+    const RetroTerminal(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Slate 900
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B), // Slate 800
+        backgroundColor: const Color(0xFF1E293B),
         title: FittedBox(
           fit: BoxFit.scaleDown,
           child: Row(
@@ -81,7 +82,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         actions: MediaQuery.of(context).size.width > 600
             ? [
-                // Desktop horizontal layout switcher
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
@@ -112,7 +112,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               currentIndex: _activeTab,
               backgroundColor: const Color(0xFF1E293B),
               selectedItemColor: Colors.blue,
-              unselectedItemColor: Colors.grey[400],
+              unselectedItemColor: Colors.grey,
               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
               onTap: (index) {
                 setState(() {
@@ -130,7 +130,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 ),
               ],
             )
-          : null, // Hide bottom navigation on larger viewports since we have header actions
+          : null,
     );
   }
 
@@ -162,6 +162,40 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           _activeTab = index;
         });
       },
+    );
+  }
+}
+
+class RetroTerminal extends StatelessWidget {
+  const RetroTerminal({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      color: const Color(0xFF020817),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text(
+            'YEAR REQUIRED',
+            style: TextStyle(
+              color: Colors.greenAccent,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'BASIC> ENTER YEAR (1900-2099)',
+            style: TextStyle(
+              color: Colors.greenAccent,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
