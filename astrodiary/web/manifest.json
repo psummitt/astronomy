@@ -1,0 +1,12 @@
+{
+    "name": "astrodiary",
+    "short_name": "astrodiary",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0D47A1",
+    "theme_color": "#0D47A1",
+    "description": "AstroDiary - Combined Astronomy Planner and Observation Logbook",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": []
+}
