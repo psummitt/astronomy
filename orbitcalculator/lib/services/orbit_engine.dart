@@ -74,10 +74,10 @@ class OrbitEngine {
         double m = (t - t0) / math.pow(a, 1.5);
         double c = 0.0364912 * m;
         double cs = math.sqrt(c * c / 4.0 + 1.0);
-        double c1_val = c / 2.0 - cs;
-        double c2_val = c / 2.0 + cs;
-        double s = _sgn(c1_val) * math.pow(c1_val.abs(), 1.0 / 3.0) +
-                   _sgn(c2_val) * math.pow(c2_val.abs(), 1.0 / 3.0);
+        double c1Val = c / 2.0 - cs;
+        double c2Val = c / 2.0 + cs;
+        double s = _sgn(c1Val) * math.pow(c1Val.abs(), 1.0 / 3.0) +
+                   _sgn(c2Val) * math.pow(c2Val.abs(), 1.0 / 3.0);
         pa = a * (1.0 - s * s);
         qa = 2.0 * a * s;
       } else if (jp == 2) {
@@ -96,56 +96,56 @@ class OrbitEngine {
         qa = a * math.sqrt(1.0 - ep * ep) * math.sin(e);
       } else {
         // Nearly Parabolic (Line 700)
-        double e_val = (1.0 - ep) / (1.0 + ep);
-        double f = 1.0 - (0.399375 - 0.198691 * e_val) * e_val;
-        double d_val = 1.0 - (0.0284851 - (0.0186341 - 0.001917 * e_val) * e_val) * e_val;
+        double eVal = (1.0 - ep) / (1.0 + ep);
+        double f = 1.0 - (0.399375 - 0.198691 * eVal) * eVal;
+        double dVal = 1.0 - (0.0284851 - (0.0186341 - 0.001917 * eVal) * eVal) * eVal;
         double c = f * math.sqrt((1.0 + ep) / 2.0) / math.pow(a, 1.5);
-        double b = ep * d_val;
+        double b = ep * dVal;
         double m = c * (t - t0);
         
         double t1 = 0.0364912 * m;
-        double t3_val = math.sqrt(t1 * t1 / 4.0 + 1.0);
-        double x0 = t1 / 2.0 - t3_val;
-        double t2 = _sgn(x0) * math.pow(x0.abs(), 1.0 / 3.0) + math.pow((t1 / 2.0 + t3_val), 1.0 / 3.0);
+        double t3Val = math.sqrt(t1 * t1 / 4.0 + 1.0);
+        double x0 = t1 / 2.0 - t3Val;
+        double t2 = _sgn(x0) * math.pow(x0.abs(), 1.0 / 3.0) + math.pow((t1 / 2.0 + t3Val), 1.0 / 3.0);
         double n = b * t2 * t2;
         double s = 1.0 + 0.431919 * n;
-        double p = n + e_val;
+        double p = n + eVal;
         double h = 1.0;
         if (p >= 0.22) {
           h = 1.0 - 3e-6 * (p - 0.21);
         }
-        double t3_final = t2 * s * h;
-        double t4 = t3_final * t3_final * e_val + 1.0;
-        pa = a * (1.0 - t3_final * t3_final) / t4;
-        qa = 2.0 * a * t3_final / t4;
+        double t3Final = t2 * s * h;
+        double t4 = t3Final * t3Final * eVal + 1.0;
+        pa = a * (1.0 - t3Final * t3Final) / t4;
+        qa = 2.0 * a * t3Final / t4;
       }
 
       double x = pa * px + qa * qx;
       double y = pa * py + qa * qy;
       double z = pa * pz + qa * qz;
-      double r_sun = math.sqrt(x * x + y * y + z * z);
+      double rSun = math.sqrt(x * x + y * y + z * z);
 
       double xi = x + solar.x;
       double eta = y + solar.y;
       double zeta = z + solar.z;
-      double d_earth = math.sqrt(xi * xi + eta * eta + zeta * zeta);
+      double dEarth = math.sqrt(xi * xi + eta * eta + zeta * zeta);
 
-      double ratio = (d_earth == 0) ? 0 : (zeta / d_earth).clamp(-1.0, 1.0);
+      double ratio = (dEarth == 0) ? 0 : (zeta / dEarth).clamp(-1.0, 1.0);
       double dc = math.asin(ratio);
-      double dc_deg = _deg(dc);
+      double dcDeg = _deg(dc);
       
       double ra = math.atan2(eta, xi);
-      double ra_deg = _deg(ra);
-      if (ra_deg < 0) ra_deg += 360.0;
-      double ra_hours = ra_deg / 15.0;
+      double raDeg = _deg(ra);
+      if (raDeg < 0) raDeg += 360.0;
+      double raHours = raDeg / 15.0;
 
-      int hr = ra_hours.isNaN ? 0 : ra_hours.floor();
-      double mn = ra_hours.isNaN ? 0 : (ra_hours - hr) * 60.0;
+      int hr = raHours.isNaN ? 0 : raHours.floor();
+      double mn = raHours.isNaN ? 0 : (raHours - hr) * 60.0;
 
-      int id = _sgn(dc_deg).toInt();
-      double dc_abs = dc_deg.abs();
-      int dg = dc_abs.isNaN ? 0 : id * dc_abs.floor().toInt();
-      double dm = dc_abs.isNaN ? 0 : (dc_abs - dc_abs.floor()) * 60.0;
+      int id = _sgn(dcDeg).toInt();
+      double dcAbs = dcDeg.abs();
+      int dg = dcAbs.isNaN ? 0 : id * dcAbs.floor().toInt();
+      double dm = dcAbs.isNaN ? 0 : (dcAbs - dcAbs.floor()) * 60.0;
 
       results.add(CalculationResult(
         date: solar.date,
@@ -153,8 +153,8 @@ class OrbitEngine {
         raMinutes: mn,
         decDegrees: dg,
         decMinutes: dm,
-        distanceEarth: d_earth,
-        distanceSun: r_sun,
+        distanceEarth: dEarth,
+        distanceSun: rSun,
       ));
     }
 

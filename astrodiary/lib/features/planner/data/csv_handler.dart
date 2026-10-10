@@ -7,68 +7,57 @@ import '../domain/planner_observation.dart';
 
 class CsvHandler {
   static Future<bool> exportToCsv(List<PlannerObservation> observations) async {
-    List<List<dynamic>> rows = [];
-    rows.add(PlannerObservation.csvHeaders);
-    for (var obs in observations) {
-      rows.add(obs.toCsvRow());
-    }
+    final rows = <List<dynamic>>[
+      PlannerObservation.csvHeaders,
+      ...observations.map((obs) => obs.toCsvRow()),
+    ];
+    final csv = Csv();
+    final csvData = csv.encode(rows);
 
-    String csvData = const ListToCsvConverter().convert(rows);
-
-    if (kIsWeb) {
-      final result = await FilePicker.platform.saveFile(
-        fileName: 'astrodiary_plan.csv',
-        bytes: utf8.encode(csvData),
-      );
-      return result != null;
-    } else {
-      String? outputFile = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save your observation plan',
-        fileName: 'astrodiary_plan.csv',
-        type: FileType.custom,
-        allowedExtensions: ['csv'],
-      );
-
-      if (outputFile != null) {
-        final file = File(outputFile);
-        await file.writeAsString(csvData);
-        return true;
-      }
-    }
-    return false;
+    final result = await FilePicker.saveFile(
+      dialogTitle: 'Save your observation plan',
+      fileName: 'astrodiary_plan.csv',
+      bytes: utf8.encode(csvData),
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+    );
+    return result != null;
   }
 
   static Future<List<PlannerObservation>?> importFromCsv() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['csv'],
-      withData: true,
     );
 
-    if (result != null) {
-      String content;
-      if (kIsWeb) {
-        content = utf8.decode(result.files.first.bytes!);
-      } else {
-        final file = File(result.files.first.path!);
-        content = await file.readAsString();
-      }
-
-      List<List<dynamic>> rows = const CsvToListConverter().convert(content);
-      if (rows.length <= 1) return [];
-
-      List<PlannerObservation> observations = [];
-      for (var i = 1; i < rows.length; i++) {
-        try {
-          if (rows[i].isNotEmpty) {
-            observations.add(PlannerObservation.fromCsvRow(rows[i]));
-          }
-        } catch (e) {
-          debugPrint('Error parsing CSV row $i: $e');
-        }
-      }
-      return observations;
+    if (result.isEmpty) {
+      return null;
     }
-    return null;
+
+    final file = result.first;
+    String content;
+    if (file.path != null) {
+      final diskFile = File(file.path!);
+      content = await diskFile.readAsString();
+    } else {
+      final bytes = await file.readAsBytes();
+      content = utf8.decode(bytes);
+    }
+
+    final csv = Csv();
+    final rows = csv.decode(content);
+    if (rows.length <= 1) return [];
+
+    final observations = <PlannerObservation>[];
+    for (var i = 1; i < rows.length; i++) {
+      try {
+        if (rows[i].isNotEmpty) {
+          observations.add(PlannerObservation.fromCsvRow(rows[i]));
+        }
+      } catch (e) {
+        debugPrint('Error parsing CSV row $i: $e');
+      }
+    }
+    return observations;
   }
 }

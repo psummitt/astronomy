@@ -119,8 +119,11 @@ class PlanetCalculator {
 
       double z = earthA - heliLongs[i];
       if (z.abs() > pi) {
-        if (z < 0) z += 2 * pi;
-        else z -= 2 * pi;
+        if (z < 0) {
+          z += 2 * pi;
+        } else {
+          z -= 2 * pi;
+        }
       }
 
       double q = sqrt(pow(sunDistances[i], 2) + pow(earthD, 2) - 2 * sunDistances[i] * earthD * cos(z));
@@ -142,8 +145,12 @@ class PlanetCalculator {
         v = sin(earthA + pi + x) * 23.44194 + eclipticDistances[i] * degPerRad;
       }
 
-      while (r >= 24) r -= 24;
-      while (r < 0) r += 24;
+      while (r >= 24) {
+        r -= 24;
+      }
+      while (r < 0) {
+        r += 24;
+      }
 
       results.add(PlanetPosition(
         name: _names[i],

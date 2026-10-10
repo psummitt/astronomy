@@ -1,30 +1,20 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'app/app.dart';
 import 'core/firebase_options.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    final options = DefaultFirebaseOptions.currentPlatform;
-    if (options != null) {
-      await Firebase.initializeApp(options: options);
-
-      FirebaseFirestore.instance.settings = const Settings(
-        persistenceEnabled: true,
-        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-      );
-    }
-  } catch (e) {
-    debugPrint('Firebase initialization notice: $e');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (_) {
+    // Firebase may be unavailable in local or unsupported environments.
   }
 
-  runApp(
-    const ProviderScope(
-      child: AstroDiaryApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: AstroDiaryApp()));
 }

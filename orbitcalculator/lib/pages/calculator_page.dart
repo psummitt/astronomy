@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/orbit_provider.dart';
 import '../services/orbit_engine.dart';
-import '../models/solar_coordinates.dart';
 
 class CalculatorPage extends StatelessWidget {
   const CalculatorPage({super.key});

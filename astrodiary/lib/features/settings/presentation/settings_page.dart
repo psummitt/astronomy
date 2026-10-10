@@ -55,19 +55,24 @@ class SettingsPage extends ConsumerWidget {
           Card(
             child: Column(
               children: [
-                RadioListTile<AppThemeMode>(
+                ListTile(
                   title: const Text('Dark Space Theme'),
                   subtitle: const Text('Default deep navy/black background for general nighttime viewing.'),
-                  value: AppThemeMode.dark,
-                  groupValue: currentTheme,
-                  onChanged: (mode) {
-                    if (mode != null) {
-                      ref.read(themeProvider.notifier).setThemeMode(mode);
-                    }
-                  },
+                  leading: Radio<AppThemeMode>(
+                    value: AppThemeMode.dark,
+                    // ignore: deprecated_member_use
+                    groupValue: currentTheme,
+                    // ignore: deprecated_member_use
+                    onChanged: (mode) {
+                      if (mode != null) {
+                        ref.read(themeProvider.notifier).setThemeMode(mode);
+                      }
+                    },
+                  ),
+                  onTap: () => ref.read(themeProvider.notifier).setThemeMode(AppThemeMode.dark),
                 ),
                 const Divider(height: 1),
-                RadioListTile<AppThemeMode>(
+                ListTile(
                   title: const Row(
                     children: [
                       Icon(Icons.remove_red_eye, color: Colors.red),
@@ -76,25 +81,35 @@ class SettingsPage extends ConsumerWidget {
                     ],
                   ),
                   subtitle: const Text('High-contrast pure red on pitch black UI to preserve dark adaptation at field sites.'),
-                  value: AppThemeMode.redNightVision,
-                  groupValue: currentTheme,
-                  onChanged: (mode) {
-                    if (mode != null) {
-                      ref.read(themeProvider.notifier).setThemeMode(mode);
-                    }
-                  },
+                  leading: Radio<AppThemeMode>(
+                    value: AppThemeMode.redNightVision,
+                    // ignore: deprecated_member_use
+                    groupValue: currentTheme,
+                    // ignore: deprecated_member_use
+                    onChanged: (mode) {
+                      if (mode != null) {
+                        ref.read(themeProvider.notifier).setThemeMode(mode);
+                      }
+                    },
+                  ),
+                  onTap: () => ref.read(themeProvider.notifier).setThemeMode(AppThemeMode.redNightVision),
                 ),
                 const Divider(height: 1),
-                RadioListTile<AppThemeMode>(
+                ListTile(
                   title: const Text('Light Theme'),
                   subtitle: const Text('Standard light background for daytime log editing.'),
-                  value: AppThemeMode.light,
-                  groupValue: currentTheme,
-                  onChanged: (mode) {
-                    if (mode != null) {
-                      ref.read(themeProvider.notifier).setThemeMode(mode);
-                    }
-                  },
+                  leading: Radio<AppThemeMode>(
+                    value: AppThemeMode.light,
+                    // ignore: deprecated_member_use
+                    groupValue: currentTheme,
+                    // ignore: deprecated_member_use
+                    onChanged: (mode) {
+                      if (mode != null) {
+                        ref.read(themeProvider.notifier).setThemeMode(mode);
+                      }
+                    },
+                  ),
+                  onTap: () => ref.read(themeProvider.notifier).setThemeMode(AppThemeMode.light),
                 ),
               ],
             ),

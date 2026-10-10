@@ -55,8 +55,9 @@ class _JulianHomePageState extends State<JulianHomePage> {
     int m2 = m1 - 1;
     int dy = 0;
 
-    if (m2 == 1) dy = 31;
-    else if (m2 == 2) dy = 59;
+    if (m2 == 1) {
+      dy = 31;
+    } else if (m2 == 2) dy = 59;
     else if (m2 == 3) dy = 90;
     else if (m2 == 4) dy = 120;
     else if (m2 == 5) dy = 151;
