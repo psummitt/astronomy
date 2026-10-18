@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 import '../../../core/providers/auth_providers.dart';
-import '../../../core/providers/firebase_providers.dart';
+import '../../../core/providers/google_auth_providers.dart';
 import '../../../core/providers/theme_provider.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -44,8 +44,7 @@ class SettingsPage extends ConsumerWidget {
                       child: const Text('Sign In'),
                     )
                   : OutlinedButton(
-                      onPressed: () =>
-                          ref.read(firebaseAuthProvider).signOut(),
+                      onPressed: () => ref.read(signOutAction)(),
                       child: const Text('Sign Out'),
                     ),
             ),

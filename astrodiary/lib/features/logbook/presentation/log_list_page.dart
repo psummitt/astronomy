@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/providers/auth_providers.dart';
-import '../../../core/providers/firebase_providers.dart';
+import '../../../core/providers/google_auth_providers.dart';
 import '../data/observation_repository.dart';
 import '../domain/observation_log.dart';
 
@@ -22,7 +22,7 @@ class LogListPage extends ConsumerWidget {
           if (user != null)
             IconButton(
               icon: const Icon(Icons.logout),
-              onPressed: () => ref.read(firebaseAuthProvider).signOut(),
+              onPressed: () => ref.read(signOutAction)(),
               tooltip: 'Sign Out',
             )
           else

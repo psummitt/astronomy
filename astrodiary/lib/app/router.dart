@@ -49,15 +49,19 @@ final router = GoRouter(
             ),
             GoRoute(
               path: 'detail/:id',
+              redirect: (context, state) =>
+                  state.extra is ObservationLog ? null : '/logbook',
               builder: (context, state) {
-                final log = state.extra as ObservationLog;
+                final log = state.extra! as ObservationLog;
                 return LogDetailPage(log: log);
               },
             ),
             GoRoute(
               path: 'edit/:id',
+              redirect: (context, state) =>
+                  state.extra is ObservationLog ? null : '/logbook',
               builder: (context, state) {
-                final log = state.extra as ObservationLog?;
+                final log = state.extra! as ObservationLog;
                 return LogFormPage(log: log);
               },
             ),

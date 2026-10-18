@@ -8,6 +8,9 @@ import 'database_helper.dart';
 class PlanNotifier extends Notifier<List<PlannerObservation>> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
+  /// Monotonic counter backing [_nextWebId].
+  int _webIdCursor = 0;
+
   @override
   List<PlannerObservation> build() {
     loadObservations();
@@ -31,14 +34,14 @@ class PlanNotifier extends Notifier<List<PlannerObservation>> {
   Future<void> addObservation(PlannerObservation observation) async {
     if (kIsWeb) {
       final newObs = PlannerObservation(
-        id: DateTime.now().millisecondsSinceEpoch,
+        id: _nextWebId(),
         targetName: observation.targetName,
         dateTime: observation.dateTime,
         ra: observation.ra,
         dec: observation.dec,
         notes: observation.notes,
       );
-      state = [...state, newObs];
+      state = _sorted([...state, newObs]);
       await _saveWeb();
     } else {
       await _dbHelper.insertObservation(observation);
@@ -59,7 +62,19 @@ class PlanNotifier extends Notifier<List<PlannerObservation>> {
 
   Future<void> importObservations(List<PlannerObservation> newObservations) async {
     if (kIsWeb) {
-      state = [...state, ...newObservations];
+      // CSV rows carry no id. Every entry needs one, otherwise it is
+      // undeletable (deleteObservation ignores null ids).
+      final withIds = newObservations
+          .map((obs) => PlannerObservation(
+                id: _nextWebId(),
+                targetName: obs.targetName,
+                dateTime: obs.dateTime,
+                ra: obs.ra,
+                dec: obs.dec,
+                notes: obs.notes,
+              ))
+          .toList();
+      state = _sorted([...state, ...withIds]);
       await _saveWeb();
     } else {
       for (var obs in newObservations) {
@@ -67,6 +82,27 @@ class PlanNotifier extends Notifier<List<PlannerObservation>> {
       }
       await loadObservations();
     }
+  }
+
+  /// Mirrors the native `ORDER BY dateTime ASC` so both platforms agree.
+  List<PlannerObservation> _sorted(List<PlannerObservation> items) {
+    final sorted = [...items];
+    sorted.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    return sorted;
+  }
+
+  /// Generates an id that is not already used. The cursor advances on every
+  /// call so a batch (e.g. a CSV import) gets distinct ids even though `state`
+  /// is not updated until the batch is complete.
+  int _nextWebId() {
+    final used = state.map((obs) => obs.id ?? -1).toSet();
+    if (_webIdCursor == 0) {
+      _webIdCursor = DateTime.now().millisecondsSinceEpoch;
+    }
+    while (used.contains(_webIdCursor)) {
+      _webIdCursor++;
+    }
+    return _webIdCursor++;
   }
 
   Future<void> _saveWeb() async {

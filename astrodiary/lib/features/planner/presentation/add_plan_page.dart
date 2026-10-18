@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +31,14 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
   bool _isCalculating = false;
   String? _calculationStatus;
 
+  /// Debounces catalog lookups so typing a name does not fire one network
+  /// request per keystroke.
+  Timer? _debounce;
+
+  /// Incremented for every lookup. Only the newest lookup is allowed to write
+  /// its result, so a slow earlier response cannot overwrite a newer one.
+  int _lookupToken = 0;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +47,7 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _targetNameController.dispose();
     _raController.dispose();
     _decController.dispose();
@@ -44,10 +55,17 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
     super.dispose();
   }
 
+  /// Queues a lookup once the user stops typing.
+  void _scheduleCalculation() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), _calculateCoordinates);
+  }
+
   Future<void> _calculateCoordinates() async {
     final name = _targetNameController.text.trim();
     if (name.isEmpty) return;
 
+    final token = ++_lookupToken;
     setState(() {
       _isCalculating = true;
       _calculationStatus = null;
@@ -57,6 +75,7 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
 
     if (nameLower == 'moon') {
       final pos = MoonCalculator.calculateForDateTime(_selectedDate, mode: MoonCalculationMode.modern);
+      if (!mounted) return;
       _raController.text = pos.raFormatted;
       _decController.text = pos.decFormatted;
       setState(() {
@@ -69,6 +88,7 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
     if (PlanetCalculator.isPlanet(name)) {
       final pos = PlanetCalculator.calculateForPlanet(name, _selectedDate);
       if (pos != null) {
+        if (!mounted) return;
         _raController.text = pos.raFormatted;
         _decController.text = pos.decFormatted;
         setState(() {
@@ -82,6 +102,7 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
     // Try star search catalog
     try {
       final star = await StarService.fetchStarData(name);
+      if (!mounted || token != _lookupToken) return;
       if (star != null) {
         _raController.text = star.raFormatted;
         _decController.text = star.decFormatted;
@@ -92,6 +113,9 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
         return;
       }
     } catch (_) {}
+
+    // A newer lookup (or a disposed page) has superseded this one.
+    if (!mounted || token != _lookupToken) return;
 
     setState(() {
       _isCalculating = false;
@@ -113,6 +137,7 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
         initialTime: TimeOfDay.fromDateTime(_selectedDate),
       );
       if (pickedTime != null) {
+        if (!mounted) return;
         setState(() {
           _selectedDate = DateTime(
             pickedDate.year,
@@ -166,9 +191,7 @@ class _AddPlanPageState extends ConsumerState<AddPlanPage> {
                     onPressed: _calculateCoordinates,
                   ),
                 ),
-                onChanged: (_) {
-                  _calculateCoordinates();
-                },
+                onChanged: (_) => _scheduleCalculation(),
                 validator: (value) =>
                     (value == null || value.trim().isEmpty)
                         ? 'Please enter a target name'

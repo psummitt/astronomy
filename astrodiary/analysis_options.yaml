@@ -16,6 +16,10 @@ analyzer:
     - web/**
     - windows/**
     - linux/**
+    # A separate, self-contained Flutter package (own pubspec.yaml/package
+    # config). Analyzing it with this project's package config makes its
+    # `package:sample_flutter_check/...` imports unresolvable.
+    - sample_flutter_check/**
 
 linter:
   # The lint rules applied to this project can be customized in the

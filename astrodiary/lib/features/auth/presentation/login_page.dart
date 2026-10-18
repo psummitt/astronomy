@@ -1,7 +1,12 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/providers/firebase_providers.dart';
+import '../../../core/providers/google_auth_providers.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +20,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   String? _errorMessage;
 
   @override
@@ -48,9 +54,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
         if (mounted) context.go('/calendar');
       } catch (createErr) {
-        setState(() {
-          _errorMessage = createErr.toString();
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = createErr.toString();
+          });
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -68,11 +76,52 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       await auth.signInAnonymously();
       if (mounted) context.go('/calendar');
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isGoogleLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref.read(googleAuthServiceProvider).signIn();
+      if (mounted) context.go('/calendar');
+    } on GoogleSignInException catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _describeGoogleError(e));
+    } on UnsupportedError catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = '${e.message}');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = 'Google sign-in failed: $e');
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  /// Turns the plugin's exception codes into something an observer can act on.
+  String _describeGoogleError(GoogleSignInException e) {
+    switch (e.code) {
+      case GoogleSignInExceptionCode.canceled:
+        return 'Google sign-in was canceled.';
+      case GoogleSignInExceptionCode.clientConfigurationError:
+        return 'Google sign-in is not configured for this build. See '
+            'docs/GOOGLE_SIGN_IN.md for the Firebase console setup.';
+      case GoogleSignInExceptionCode.uiUnavailable:
+        return 'The Google sign-in window could not be shown. Check that '
+            'popups are allowed for this site.';
+      default:
+        return e.description ?? 'Google sign-in failed (${e.code.name}).';
     }
   }
 
@@ -155,7 +204,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         : null,
                   ),
                   const SizedBox(height: 24),
-                  if (_isLoading)
+                  if (isGoogleSignInSupported) ...[
+                    _GoogleSignInButton(
+                      isLoading: _isGoogleLoading,
+                      enabled: !_isLoading && !_isGoogleLoading,
+                      onPressed: _signInWithGoogle,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'or',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isLoading || _isGoogleLoading)
                     const Center(child: CircularProgressIndicator())
                   else ...[
                     ElevatedButton.icon(
@@ -184,4 +255,104 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
     );
   }
+}
+
+/// "Continue with Google" button.
+///
+/// `google_sign_in` v7 no longer ships a button widget, so this draws one. The
+/// Google "G" is rendered with the official brand colours.
+class _GoogleSignInButton extends StatelessWidget {
+  const _GoogleSignInButton({
+    required this.isLoading,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final bool isLoading;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+        side: const BorderSide(color: Color(0xFFDADCE0)),
+        foregroundColor: const Color(0xFF1F1F1F),
+      ),
+      onPressed: enabled ? onPressed : null,
+      child: isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _GoogleLogo(),
+                SizedBox(width: 12),
+                Text('Continue with Google'),
+              ],
+            ),
+    );
+  }
+}
+
+/// The four-colour Google "G".
+class _GoogleLogo extends StatelessWidget {
+  const _GoogleLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: CustomPaint(painter: _GoogleLogoPainter()),
+    );
+  }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(ui.Canvas canvas, Size size) {
+    final w = size.width;
+    final stroke = w * 0.18;
+    final radius = (w - stroke) / 2;
+    final paint = ui.Paint()
+      ..style = ui.PaintingStyle.stroke
+      ..strokeWidth = stroke;
+
+    canvas.save();
+    canvas.translate(w / 2, w / 2);
+    canvas.rotate(-math.pi / 2);
+
+    // Four arcs, one per brand colour, each covering a quarter turn plus an
+    // overlap so the ring has no visible seams.
+    void arc(double startDeg, double sweepDeg, Color color) {
+      paint.color = color;
+      canvas.drawArc(
+        ui.Rect.fromCircle(center: Offset.zero, radius: radius),
+        startDeg * math.pi / 180,
+        sweepDeg * math.pi / 180,
+        false,
+        paint,
+      );
+    }
+
+    arc(-42, 96, const Color(0xFF4285F4)); // blue
+    arc(54, 96, const Color(0xFF34A853)); // green
+    arc(150, 96, const Color(0xFFFBBC05)); // yellow
+    arc(246, 96, const Color(0xFFEA4335)); // red
+
+    // Blue horizontal bar across the middle.
+    paint.color = const Color(0xFF4285F4);
+    paint.strokeCap = ui.StrokeCap.butt;
+    canvas.drawLine(Offset.zero, Offset(radius, 0), paint);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

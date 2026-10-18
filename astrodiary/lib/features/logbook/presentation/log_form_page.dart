@@ -61,7 +61,7 @@ class _LogFormPageState extends ConsumerState<LogFormPage> {
       firstDate: DateTime(1950),
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
-    if (picked != null && picked != _date) {
+    if (picked != null && mounted && picked != _date) {
       setState(() => _date = picked);
     }
   }
@@ -71,7 +71,7 @@ class _LogFormPageState extends ConsumerState<LogFormPage> {
       context: context,
       initialTime: _startTime,
     );
-    if (picked != null && picked != _startTime) {
+    if (picked != null && mounted && picked != _startTime) {
       setState(() => _startTime = picked);
     }
   }

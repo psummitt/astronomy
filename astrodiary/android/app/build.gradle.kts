@@ -2,6 +2,9 @@ plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Supplies the OAuth client ids that google_sign_in needs on Android.
+    // Requires android/app/google-services.json to match `applicationId`.
+    id("com.google.gms.google-services")
 }
 
 android {
