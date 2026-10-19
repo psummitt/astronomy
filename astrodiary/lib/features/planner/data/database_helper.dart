@@ -1,8 +1,8 @@
-import 'dart:async';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
-import 'package:path/path.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'database_backend.dart';
+// Resolves to the SQLite implementation only where `dart:io` exists, so the
+// web build never compiles dart:ffi / sqflite / sqlite3.
+import 'database_backend_stub.dart'
+    if (dart.library.io) 'database_backend_io.dart';
 import '../domain/planner_observation.dart';
 
 class DatabaseHelper {
@@ -10,71 +10,25 @@ class DatabaseHelper {
   factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
 
-  Database? _database;
-
-  Future<Database?> get database async {
-    if (kIsWeb) return null;
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database;
-  }
-
-  Future<Database?> _initDatabase() async {
-    if (kIsWeb) {
-      return null;
-    }
-
-    if (Platform.isWindows || Platform.isLinux) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    }
-
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'astrodiary_planner.db');
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _onCreate,
-    );
-  }
-
-  Future _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE planner_observations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        targetName TEXT,
-        dateTime TEXT,
-        ra TEXT,
-        dec TEXT,
-        notes TEXT
-      )
-    ''');
-  }
+  final PlannerDatabaseBackend _backend = createPlannerDatabaseBackend();
 
   Future<int> insertObservation(PlannerObservation observation) async {
-    final db = await database;
-    if (db == null) return 0;
-    return await db.insert('planner_observations', observation.toMap());
+    return _backend.insertObservation(observation.toMap());
   }
 
   Future<List<PlannerObservation>> getObservations() async {
-    final db = await database;
-    if (db == null) return [];
-    final List<Map<String, dynamic>> maps =
-        await db.query('planner_observations', orderBy: 'dateTime ASC');
-    return List.generate(maps.length, (i) => PlannerObservation.fromMap(maps[i]));
+    final List<Map<String, Object?>> maps = await _backend.listObservations();
+    return List.generate(
+      maps.length,
+      (int i) => PlannerObservation.fromMap(maps[i]),
+    );
   }
 
   Future<int> deleteObservation(int id) async {
-    final db = await database;
-    if (db == null) return 0;
-    return await db.delete('planner_observations', where: 'id = ?', whereArgs: [id]);
+    return _backend.deleteObservation(id);
   }
 
   Future<void> clearAll() async {
-    final db = await database;
-    if (db == null) return;
-    await db.delete('planner_observations');
+    await _backend.clearObservations();
   }
 }

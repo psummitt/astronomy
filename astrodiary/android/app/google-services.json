@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "astrodiary-app",
-    "storage_bucket": "astrodiary-app.appspot.com"
+    "project_number": "54029302160",
+    "project_id": "astrodiary-ccd70",
+    "storage_bucket": "astrodiary-ccd70.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef123456",
+        "mobilesdk_app_id": "1:54029302160:android:ff2c5f044c0db88a2adb15",
         "android_client_info": {
           "package_name": "com.example.astrodiary"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyFakeKeyForAstroDiaryApp"
+          "current_key": "AIzaSyBS82hG188jfxOyYnlH9da_k-bF4uw6AL4"
         }
       ],
       "services": {

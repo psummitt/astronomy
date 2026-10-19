@@ -1,8 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+// Keeps `dart:io` out of the web build; the web stub returns null.
+import 'csv_file_reader_stub.dart' if (dart.library.io) 'csv_file_reader.dart';
 import '../domain/planner_observation.dart';
 
 class CsvHandler {
@@ -35,14 +37,14 @@ class CsvHandler {
     }
 
     final file = result.first;
-    String content;
+
+    // Prefer a direct disk read on platforms that have one; otherwise decode
+    // the bytes file_picker already loaded (the only option in a browser).
+    String? content;
     if (file.path != null) {
-      final diskFile = File(file.path!);
-      content = await diskFile.readAsString();
-    } else {
-      final bytes = await file.readAsBytes();
-      content = utf8.decode(bytes);
+      content = await readPickedTextFile(file.path!);
     }
+    content ??= utf8.decode(await file.readAsBytes());
 
     final csv = Csv();
     final rows = csv.decode(content);

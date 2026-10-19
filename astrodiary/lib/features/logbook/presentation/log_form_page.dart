@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/providers/auth_providers.dart';
+import '../../planner/data/plan_provider.dart';
+import '../../planner/domain/planner_observation.dart';
 import '../data/observation_repository.dart';
 import '../domain/observation_log.dart';
 
@@ -76,7 +79,53 @@ class _LogFormPageState extends ConsumerState<LogFormPage> {
     }
   }
 
-  void _save() async {
+  Future<String> _notesWithPlanCoordinates(
+    String targetName,
+    DateTime startDateTime,
+  ) async {
+    final enteredNotes = _notesController.text.trim();
+
+    try {
+      final planNotifier = ref.read(planProvider.notifier);
+      await planNotifier.loadObservations();
+
+      final normalizedTargetName = targetName.trim().toLowerCase();
+      PlannerObservation? closestPlan;
+      Duration? closestDifference;
+      for (final plan in ref.read(planProvider)) {
+        if (plan.targetName.trim().toLowerCase() != normalizedTargetName ||
+            plan.ra.trim().isEmpty ||
+            plan.dec.trim().isEmpty) {
+          continue;
+        }
+
+        final difference = plan.dateTime.difference(startDateTime).abs();
+        if (closestDifference == null || difference < closestDifference) {
+          closestPlan = plan;
+          closestDifference = difference;
+        }
+      }
+
+      if (closestPlan == null) return enteredNotes;
+
+      final coordinateNote =
+          'Planned coordinates: RA ${closestPlan.ra}, Dec ${closestPlan.dec}';
+      final existingNotes = enteredNotes
+          .split('\n')
+          .where(
+            (line) => !line.trimLeft().startsWith('Planned coordinates: RA '),
+          )
+          .join('\n')
+          .trim();
+      return existingNotes.isEmpty
+          ? coordinateNote
+          : '$existingNotes\n$coordinateNote';
+    } catch (_) {
+      return enteredNotes;
+    }
+  }
+
+  Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
       final user = ref.read(currentUserProvider);
       if (user == null) {
@@ -95,6 +144,8 @@ class _LogFormPageState extends ConsumerState<LogFormPage> {
         _startTime.hour,
         _startTime.minute,
       );
+      final targetName = _targetNameController.text.trim();
+      final notes = await _notesWithPlanCoordinates(targetName, startDateTime);
 
       final log = ObservationLog(
         id: widget.log?.id ?? '',
@@ -103,34 +154,28 @@ class _LogFormPageState extends ConsumerState<LogFormPage> {
         startTime: startDateTime,
         weather: Weather(conditions: _weatherConditionsController.text.trim()),
         target: Target(
-          name: _targetNameController.text.trim(),
+          name: targetName,
           objectType: _targetTypeController.text.trim().isNotEmpty
               ? _targetTypeController.text.trim()
               : null,
         ),
-        instrument:
-            Instrument(name: _instrumentNameController.text.trim()),
-        notes: _notesController.text.trim(),
+        instrument: Instrument(name: _instrumentNameController.text.trim()),
+        notes: notes,
         createdAt: widget.log?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
       try {
         if (widget.log == null) {
-          await ref
-              .read(observationRepositoryProvider)
-              .createObservation(log);
+          await ref.read(observationRepositoryProvider).createObservation(log);
         } else {
-          await ref
-              .read(observationRepositoryProvider)
-              .updateObservation(log);
+          await ref.read(observationRepositoryProvider).updateObservation(log);
         }
         if (mounted) context.pop();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving log: $e')),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error saving log: $e')));
         }
       }
     }
@@ -175,8 +220,9 @@ class _LogFormPageState extends ConsumerState<LogFormPage> {
                 labelText: 'Target Name * (e.g. M31, Jupiter)',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? 'Please enter a target' : null,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Please enter a target'
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -193,18 +239,21 @@ class _LogFormPageState extends ConsumerState<LogFormPage> {
                 labelText: 'Instrument * (e.g. 8" Dobsonian, 10x50 Binoculars)',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? 'Please enter an instrument' : null,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Please enter an instrument'
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _weatherConditionsController,
               decoration: const InputDecoration(
-                labelText: 'Weather & Sky Conditions * (e.g. Clear, Seeing 4/5)',
+                labelText:
+                    'Weather & Sky Conditions * (e.g. Clear, Seeing 4/5)',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? 'Please enter weather details' : null,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Please enter weather details'
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
